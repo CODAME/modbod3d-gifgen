@@ -216,10 +216,10 @@ function loadModel(){
 		mesh = new THREE.Mesh( geometry, material );
 
 
-		mesh.position.set( 0, -5750, 0);
+		mesh.position.set( 0, -8000, 0);
 		//if a model is loaded sideways, get it upright
 		mesh.rotation.set( - Math.PI / 2, 0,  0);
-		mesh.scale.set( 130, 130, 130 );
+		mesh.scale.set( 160, 160, 160 );
 
 		scene.add( mesh );
 
