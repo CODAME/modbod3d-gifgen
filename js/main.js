@@ -19,15 +19,10 @@ var cameraOrtho;
 var sceneOrtho;
 var mapA
 
+var writeFramesToGif = false;
 
 function setScene(){
-
-
-
 	turn_counter = 0;
-
-        gif = new GIF({ workers: 2, quality: 4 });
-
 
 	// set the scene size
 	var WIDTH = 400,
@@ -174,30 +169,34 @@ function render() {
 		renderer.clearDepth();
 		renderer.render( sceneOrtho, cameraOrtho );
 
-
-
 		//debugging block
 //		getImageData = true;
-//			renderImg();
+//		renderImg();
 //		console.debug(imgData);
-
 //		console.log(renderer.domElement);
-		gif.addFrame(renderer.domElement, {copy: true, delay: 40});
+		
+		if (writeFramesToGif==true) {
+			gif.addFrame(renderer.domElement, {copy: true, delay: 40});
+		};
 
-	
 		turn_counter++;
+
 	}
 	else if (turn_counter == 60)
 	{
 
-		gif.on('finished', function(blob) {
-  			window.open(URL.createObjectURL(blob));
-		});
+		if (writeFramesToGif==true) {
+			gif.on('finished', function(blob) {
+	  			window.open(URL.createObjectURL(blob));
+			});
 
-		gif.render();
+			gif.render();
 
+			//go back to just spinning around
+			writeFramesToGif = false;
+		}
 
-		turn_counter++;
+		turn_counter = 0;
 	}
 	
 
@@ -227,6 +226,12 @@ function loadModel(){
 	loader.load( 'stl/tiare_red.stl' );
 }
 
+function makeGif(){
+	gif = new GIF({ workers: 2, quality: 4 });
+	turn_counter = 0;
+	writeFramesToGif = true;
+}
+
 function animate(){
 //	requestAnimationFrame( animate, renderer.domElement );
 	requestAnimationFrame( animate );
@@ -244,4 +249,8 @@ $( document ).ready(function() {
 
 	// interaction
 	setControls();
+
+	document.getElementById("generate-button").addEventListener("click", function(){
+	    makeGif();
+	});	
 });
