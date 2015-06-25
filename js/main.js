@@ -26,6 +26,8 @@ var writeFramesToGif = false;
 
 var retinaScreen = true;
 
+var modelToLoad = 'stl/centered.stl';
+
 function setScene(){
 	turn_counter = 0;
 
@@ -78,9 +80,7 @@ function setScene(){
 	$container.append(renderer.domElement);
 
 
-////////// sprite inits
-
-
+	// sprite inits
 	var widthOrtho = WIDTH;
 	var heightOrtho = HEIGHT;
 
@@ -90,14 +90,11 @@ function setScene(){
 
 	sceneOrtho = new THREE.Scene();
 
-
 	mapA = THREE.ImageUtils.loadTexture( "logo/github-65.png", undefined, loadSprite);
-	
 }
 
 function loadSprite( texture )
 {
-
 	var material = new THREE.SpriteMaterial( { map : texture } );
 
 	var widthSprite = material.map.image.width;
@@ -156,8 +153,11 @@ function setControls(){
 	//var radius = sphere.geometry.boundingSphere.radius;
 	controls = new THREE.OrbitControls( camera );
 	controls.target = new THREE.Vector3( 0, 0, 0 );
-	//controls.noPan = true;
-	//controls.noRotate = true;
+	//todo: why are controls jacked?
+	//bring the pan and rotate back!
+	//right now it's just scale
+	controls.noPan = true;
+	controls.noRotate = true;
 	controls.update();
 }
 
@@ -217,6 +217,10 @@ function render() {
 }
 
 function loadModel(){
+
+	if(mesh){
+		scene.remove(mesh);
+	}
 	
 	var loader = new THREE.STLLoader();
 
@@ -236,7 +240,7 @@ function loadModel(){
 		scene.add( mesh );
 
 	} );
-	loader.load( 'stl/tiare_red.stl' );
+	loader.load( modelToLoad );
 }
 
 function makeGif(){
@@ -263,21 +267,28 @@ function fileSupportTest(){
 	}
 }
 
-function renderImage(files){
+function renderNewModel(files){
 	var f = files[0];
+	//TODO STL ONLY
+	/*
 	if ( !f.type.match('image.*') ) {
 		//display error message
 		return;
 	}
+	*/
 
 	var reader = new FileReader();
 
 	// Closure to capture the file information.
 	reader.onload = (function(theFile) { return function(e) {
-		// Render thumbnail.
-		var profileImage = document.getElementById('profile-image');
-		profileImage.innerHTML = ['<img id="loadedPhoto" src="', e.target.result,'" title="', escape(theFile.name), '"/>'].join('');
-		$(function(){ $('#loadedPhoto').Jcrop(); });
+		console.log(e.target.result);
+
+		// Render loaded STL.
+
+		//var profileImage = document.getElementById('profile-image');
+		//profileImage.innerHTML = ['<img id="loadedPhoto" src="', e.target.result,'" title="', escape(theFile.name), '"/>'].join('');
+		//$(function(){ $('#loadedPhoto').Jcrop(); });
+
 	};})(f);
 
 	// Read in the image file as a data URL.
@@ -289,7 +300,8 @@ function renderAttributes(files){
 	// files is a FileList of File objects. List some properties.
 	var output = [];
 	for (var i = 0, f; f = files[i]; i++) {
-	  output.push('<li><strong>', escape(f.name), '</strong> (', f.type || 'n/a', ') - ',
+
+	output.push('<li><b>', escape(f.name), '</b> (', f.type || 'n/a', ') - ',
 	              f.size, ' bytes, last modified: ',
 	              f.lastModifiedDate ? f.lastModifiedDate.toLocaleDateString() : 'n/a',
 	              '</li>');
@@ -308,6 +320,7 @@ function handleDragOver(evt) {
 function handleFileInput(evt) {
 	var files = evt.target.files; // FileList object
 	renderAttributes(files);
+	renderNewModel(files);
 }
 
 function handleFileDrop(evt) {
@@ -315,6 +328,7 @@ function handleFileDrop(evt) {
 	evt.preventDefault();
 	var files = evt.dataTransfer.files; // FileList object.
 	renderAttributes(files);
+	renderNewModel(files);
 }
 
 function initFileReading(){
