@@ -79,7 +79,19 @@ table{
 
     width: 60px;
     opacity: .5;
-
-
 }
 
+#drop-zone {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    z-index: 1;
+}
+
+#content {
+    position: fixed;
+    z-index: 10;
+    margin: 1em;
+}

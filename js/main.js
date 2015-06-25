@@ -19,14 +19,23 @@ var cameraOrtho;
 var sceneOrtho;
 var mapA
 
+var WIDTH;
+var HEIGHT;
+
 var writeFramesToGif = false;
+
+var retinaScreen = true;
 
 function setScene(){
 	turn_counter = 0;
 
 	// set the scene size
-	var WIDTH = 400,
-		HEIGHT = 400;
+	WIDTH = 400;
+	HEIGHT = 400;
+	if(retinaScreen == true){
+		WIDTH = 200;
+		HEIGHT = 200;
+	}
 
 	// set some camera attributes
 	var VIEW_ANGLE = 45,
@@ -72,8 +81,8 @@ function setScene(){
 ////////// sprite inits
 
 
-	var widthOrtho = 400;
-	var heightOrtho = 400;
+	var widthOrtho = WIDTH;
+	var heightOrtho = HEIGHT;
 
 	cameraOrtho = new THREE.OrthographicCamera( - widthOrtho / 2, widthOrtho / 2, heightOrtho / 2, - heightOrtho / 2, 1, 10 );
 
@@ -82,7 +91,7 @@ function setScene(){
 	sceneOrtho = new THREE.Scene();
 
 
-	mapA = THREE.ImageUtils.loadTexture( "logo/CODAME_C_Jagged_01-white-with-gray-cray.png", undefined, loadSprite);
+	mapA = THREE.ImageUtils.loadTexture( "logo/github-65.png", undefined, loadSprite);
 	
 }
 
@@ -102,13 +111,17 @@ function loadSprite( texture )
 	var halfWidthSprite = widthSprite / 2;
 	var halfHeightSprite = heightSprite / 2;
 
-	var halfScreenWidth = 200;
-	var halfScreenHeight = 200;
+	var halfScreenWidth = WIDTH/2;
+	var halfScreenHeight = HEIGHT/2;
 
-	spriteBL.position.set( - halfScreenWidth + halfWidthSprite,
-			       - halfScreenHeight + halfWidthSprite, 1 ); // bottom left
+	// bottom right, github
+	spriteBL.position.set( halfScreenWidth - halfWidthSprite +4, - halfScreenHeight + halfWidthSprite -4, 1 );
 
-//	spriteBL.position.set( 0, 0, 1 ); // center
+	// bottom left, codame
+	//spriteBL.position.set( - halfScreenWidth + halfWidthSprite, - halfScreenHeight + halfWidthSprite, 1 ); 
+
+	// center
+	//spriteBL.position.set( 0, 0, 1 ); 
 
 
 	sceneOrtho.add(spriteBL);
@@ -238,6 +251,86 @@ function animate(){
 	render();
 }
 
+/***
+* DRAG N DERP FUNCTIONS
+***/
+function fileSupportTest(){
+	// Check for the various File API support.
+	if (window.File && window.FileReader && window.FileList && window.Blob) {
+	  // Great success! All the File APIs are supported.
+	} else {
+	  alert('The File APIs are not fully supported in this browser.');
+	}
+}
+
+function renderImage(files){
+	var f = files[0];
+	if ( !f.type.match('image.*') ) {
+		//display error message
+		return;
+	}
+
+	var reader = new FileReader();
+
+	// Closure to capture the file information.
+	reader.onload = (function(theFile) { return function(e) {
+		// Render thumbnail.
+		var profileImage = document.getElementById('profile-image');
+		profileImage.innerHTML = ['<img id="loadedPhoto" src="', e.target.result,'" title="', escape(theFile.name), '"/>'].join('');
+		$(function(){ $('#loadedPhoto').Jcrop(); });
+	};})(f);
+
+	// Read in the image file as a data URL.
+	reader.readAsDataURL(f);
+
+}
+
+function renderAttributes(files){
+	// files is a FileList of File objects. List some properties.
+	var output = [];
+	for (var i = 0, f; f = files[i]; i++) {
+	  output.push('<li><strong>', escape(f.name), '</strong> (', f.type || 'n/a', ') - ',
+	              f.size, ' bytes, last modified: ',
+	              f.lastModifiedDate ? f.lastModifiedDate.toLocaleDateString() : 'n/a',
+	              '</li>');
+	}
+
+	// spew it on the screen
+	document.getElementById('list').innerHTML = '<ul>' + output.join('') + '</ul>';	
+}
+
+function handleDragOver(evt) {
+	evt.stopPropagation();
+	evt.preventDefault();
+	evt.dataTransfer.dropEffect = 'copy'; // Explicitly show this is a copy.
+}
+
+function handleFileInput(evt) {
+	var files = evt.target.files; // FileList object
+	renderAttributes(files);
+}
+
+function handleFileDrop(evt) {
+	evt.stopPropagation();
+	evt.preventDefault();
+	var files = evt.dataTransfer.files; // FileList object.
+	renderAttributes(files);
+}
+
+function initFileReading(){
+	//functionality from http://www.html5rocks.com/en/tutorials/file/dndfiles/
+	//read progress bar could be added if necessary but since it's client side loading
+	//it's pretty fast and an progress bar would be more interesting/useful when sending image to server
+	
+	//read via input select
+	document.getElementById('files').addEventListener('change', handleFileInput, false);	
+
+	//read via drag and drop
+	var dropZone = document.getElementById('drop-zone');
+	dropZone.addEventListener('dragover', handleDragOver, false);
+	dropZone.addEventListener('drop', handleFileDrop, false);
+}
+
 $( document ).ready(function() {
 	// init
 	setScene();
@@ -253,4 +346,7 @@ $( document ).ready(function() {
 	document.getElementById("generate-button").addEventListener("click", function(){
 	    makeGif();
 	});	
+
+	initFileReading();
+
 });
