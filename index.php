@@ -7,6 +7,12 @@
 	<!--[if IE]>
 		<script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
 	<![endif]-->
+	<script>
+		<? if( $_GET['file'] ){
+			$file = $_GET['file'];
+			echo "var modelToLoad = 'stl/$file';";
+		}?>
+	</script>
 	<script src="js/vendor/jquery-1.11.1.min.js"></script>
 	<script src="js/vendor/underscore-min.js"></script>
 
@@ -34,6 +40,24 @@
 		<br>
 		<br>
 		<output id="list"></output>
+
+		<ul>
+			<? 
+
+				$files = glob('stl/*');
+				foreach ($files as $f){
+				  $tmp[basename($f)] = filemtime($f);
+				}
+				asort($tmp);
+				$files = array_keys($tmp);
+
+				// $files = scandir('./stl');
+				foreach( $files as $file ){
+					if( $file == '.' || $file == '..' || $file == '.DS_Store' ){ continue; }
+					echo "<li><a href='?file=$file'>$file</a></li>";
+				}
+			?>
+		</ul>
 
 	</div>
 

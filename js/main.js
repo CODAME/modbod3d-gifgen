@@ -26,7 +26,8 @@ var writeFramesToGif = false;
 
 var retinaScreen = true;
 
-var modelToLoad = 'stl/centered.stl';
+// var modelToLoad = 'stl/centered.stl';
+// declared in PHP at the top of index
 
 function setScene(){
 	turn_counter = 0;
