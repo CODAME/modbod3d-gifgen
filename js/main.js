@@ -26,7 +26,7 @@ var writeFramesToGif = false;
 
 var retinaScreen = true;
 
-var modelToLoad = 'stl/centered.stl';
+var modelToLoad = 'stl/' + 'centered.stl';
 
 function setScene(){
 	turn_counter = 0;
@@ -101,9 +101,7 @@ function loadSprite( texture )
 	var heightSprite = material.map.image.height;	
 
 	spriteBL = new THREE.Sprite( material );
-	spriteBL.scale.set( 2 * widthSprite / 3, 2 * heightSprite / 3, 1 );
-
-
+	spriteBL.scale.set( widthSprite / 3, heightSprite / 3, 1 );
 
 	var halfWidthSprite = widthSprite / 2;
 	var halfHeightSprite = heightSprite / 2;
@@ -112,7 +110,7 @@ function loadSprite( texture )
 	var halfScreenHeight = HEIGHT/2;
 
 	// bottom right, github
-	spriteBL.position.set( halfScreenWidth - halfWidthSprite +4, - halfScreenHeight + halfWidthSprite -4, 1 );
+	spriteBL.position.set( halfScreenWidth - halfWidthSprite +15, - halfScreenHeight + halfWidthSprite -15, 1 );
 
 	// bottom left, codame
 	//spriteBL.position.set( - halfScreenWidth + halfWidthSprite, - halfScreenHeight + halfWidthSprite, 1 ); 
