@@ -4,7 +4,6 @@
 var scene;
 var renderer;
 var camera;
-var sphere;
 var mesh;
 var rotationFrame;
 var helper;
@@ -22,11 +21,19 @@ var mapA
 var WIDTH;
 var HEIGHT;
 
+var loaderListener;
+
+var gui;
+
+//initial values
+var camZ = 250;
+
 var writeFramesToGif = false;
 
 var retinaScreen = true;
 
-var modelToLoad = 'stl/' + 'centered.stl';
+// var modelToLoad = 'stl/centered.stl';
+// declared in PHP at the top of index
 
 function setScene(){
 	turn_counter = 0;
@@ -70,15 +77,13 @@ function setScene(){
 
 	// the camera starts at 0,0,0
 	// so pull it back
-	camera.position.z = 24000;
-	camera.position.y = 12000;
+	camera.position.z = camZ;
 
 	// start the renderer
 	renderer.setSize(WIDTH, HEIGHT);
 
 	// attach the render-supplied DOM element
 	$container.append(renderer.domElement);
-
 
 	// sprite inits
 	var widthOrtho = WIDTH;
@@ -90,15 +95,15 @@ function setScene(){
 
 	sceneOrtho = new THREE.Scene();
 
-	mapA = THREE.ImageUtils.loadTexture( "logo/github-65.png", undefined, loadSprite);
+	mapA = THREE.ImageUtils.loadTexture( "logo/CODAME_C_Jagged_01-pure-white.png", undefined, loadSprite);
 }
 
 function loadSprite( texture )
 {
-	var material = new THREE.SpriteMaterial( { map : texture } );
+	var material = new THREE.SpriteMaterial( { map : texture, opacity: .5} );
 
 	var widthSprite = material.map.image.width;
-	var heightSprite = material.map.image.height;	
+	var heightSprite = material.map.image.height;
 
 	spriteBL = new THREE.Sprite( material );
 	spriteBL.scale.set( widthSprite / 3, heightSprite / 3, 1 );
@@ -110,70 +115,35 @@ function loadSprite( texture )
 	var halfScreenHeight = HEIGHT/2;
 
 	// bottom right, github
-	spriteBL.position.set( halfScreenWidth - halfWidthSprite +15, - halfScreenHeight + halfWidthSprite -15, 1 );
+	//spriteBL.position.set( halfScreenWidth - halfWidthSprite +15, - halfScreenHeight + halfWidthSprite -15, 1 );
 
 	// bottom left, codame
-	//spriteBL.position.set( - halfScreenWidth + halfWidthSprite, - halfScreenHeight + halfWidthSprite, 1 ); 
+	spriteBL.position.set( - halfScreenWidth + halfWidthSprite -35, - halfScreenHeight + halfWidthSprite -35, 1 );
+
 
 	// center
-	//spriteBL.position.set( 0, 0, 1 ); 
+	//spriteBL.position.set( 0, 0, 1 );
 
-
+	//remove logo sprite?
 	sceneOrtho.add(spriteBL);
 }
 
-function makeSphere(){
-	// set up the sphere vars
-	var radius = 5,
-	    segments = 16,
-	    rings = 16;
-
-	var sphereMaterial = new THREE.MeshNormalMaterial();
-
-	// create a new mesh with
-	// sphere geometry - we will cover
-	// the sphereMaterial next!
-	sphere = new THREE.Mesh(
-
-	  new THREE.SphereGeometry(
-	    radius,
-	    segments,
-	    rings),
-
-	  sphereMaterial);
-
-	// add the sphere to the scene
-	scene.add(sphere);	
-
-}
-
-function setControls(){
-	//var radius = sphere.geometry.boundingSphere.radius;
-	controls = new THREE.OrbitControls( camera );
-	controls.target = new THREE.Vector3( 0, 0, 0 );
-	//todo: why are controls jacked?
-	//bring the pan and rotate back!
-	//right now it's just scale
-	controls.noPan = true;
-	controls.noRotate = true;
-	controls.update();
-}
-
 //debugging function
-function renderImg() { 
+function renderImg() {
         requestAnimationFrame(renderImg);
         renderer.render(scene, camera);
         if(getImageData == true){
             imgData = renderer.domElement.toDataURL();
             getImageData = false;
         }
-    } 
+    }
 
 function render() {
 
+
 	if(mesh && turn_counter < 60){
-		
-		mesh.rotation.z = turn_counter * (Math.PI / 30);
+
+		mesh.rotation.y = turn_counter * (Math.PI / 30);
 
 		renderer.clear();
 		renderer.render( scene, camera );
@@ -185,7 +155,7 @@ function render() {
 //		renderImg();
 //		console.debug(imgData);
 //		console.log(renderer.domElement);
-		
+
 		if (writeFramesToGif==true) {
 			gif.addFrame(renderer.domElement, {copy: true, delay: 40});
 		};
@@ -209,35 +179,34 @@ function render() {
 
 		turn_counter = 0;
 	}
-	
+
 
       //renderer.render( scene, camera );
 }
 
-function loadModel(){
+var loadModel = function(){
 
+	//dispose of the previous model
 	if(mesh){
 		scene.remove(mesh);
 	}
-	
+
 	var loader = new THREE.STLLoader();
 
-	loader.addEventListener( 'load', function ( event ) {
+	loaderListener = loader.addEventListener( 'load', function ( event ) {
 		var material = new THREE.MeshNormalMaterial();
 		var geometry = event.content;
 		//modifying the center point
 		//geometry.applyMatrix( new THREE.Matrix4().makeTranslation( 0, 0, 0 ) );
 		mesh = new THREE.Mesh( geometry, material );
 
-
-		mesh.position.set( 0, -7500, 0);
 		//if a model is loaded sideways, get it upright
-		mesh.rotation.set( - Math.PI / 2, 0,  0);
-		mesh.scale.set( 160, 160, 160 );
+		mesh.rotation.set( 0, 0, 0);
 
 		scene.add( mesh );
 
 	} );
+
 	loader.load( modelToLoad );
 }
 
@@ -249,6 +218,14 @@ function makeGif(){
 
 function animate(){
 //	requestAnimationFrame( animate, renderer.domElement );
+	if(mesh){
+		mesh.scale.set( window.parameters.meshScale, window.parameters.meshScale, window.parameters.meshScale );
+		mesh.position.set( 0, window.parameters.meshVert, 0);
+		camera.position.y = window.parameters.camVert;
+		camera.lookAt( scene.position );
+	}
+
+
 	requestAnimationFrame( animate );
 	render();
 }
@@ -306,7 +283,7 @@ function renderAttributes(files){
 	}
 
 	// spew it on the screen
-	document.getElementById('list').innerHTML = '<ul>' + output.join('') + '</ul>';	
+	document.getElementById('list').innerHTML = '<ul>' + output.join('') + '</ul>';
 }
 
 function handleDragOver(evt) {
@@ -333,9 +310,9 @@ function initFileReading(){
 	//functionality from http://www.html5rocks.com/en/tutorials/file/dndfiles/
 	//read progress bar could be added if necessary but since it's client side loading
 	//it's pretty fast and an progress bar would be more interesting/useful when sending image to server
-	
+
 	//read via input select
-	document.getElementById('files').addEventListener('change', handleFileInput, false);	
+	document.getElementById('files').addEventListener('change', handleFileInput, false);
 
 	//read via drag and drop
 	var dropZone = document.getElementById('drop-zone');
@@ -343,22 +320,36 @@ function initFileReading(){
 	dropZone.addEventListener('drop', handleFileDrop, false);
 }
 
-$( document ).ready(function() {
+function init(){
+	var gui = new dat.GUI();
+	var parameters =
+	{
+		meshScale: 200,
+		meshVert: 0,
+		camVert: 100
+	}
+	gui.add(parameters,'meshScale').min(40).max(400).name('Mesh Scale');
+	gui.add(parameters,'meshVert').min(-300).max(300).name('Mesh Vert');
+	gui.add(parameters,'camVert').min(-300).max(300).name('Cam Vert');
+
+	window.parameters = parameters;
+
 	// init
 	setScene();
 
 	// draw
-	//makeSphere();
 	loadModel();
-	animate();
 
-	// interaction
-	setControls();
+}
+
+$( document ).ready(function() {
+	init();
+	animate();
 
 	document.getElementById("generate-button").addEventListener("click", function(){
 	    makeGif();
-	});	
+	});
 
-	initFileReading();
+	//initFileReading();
 
 });
