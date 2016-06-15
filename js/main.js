@@ -274,40 +274,6 @@ function renderAttributes(files){
 	document.getElementById('list').innerHTML = '<ul>' + output.join('') + '</ul>';
 }
 
-function handleDragOver(evt) {
-	evt.stopPropagation();
-	evt.preventDefault();
-	evt.dataTransfer.dropEffect = 'copy'; // Explicitly show this is a copy.
-}
-
-function handleFileInput(evt) {
-	var files = evt.target.files; // FileList object
-	renderAttributes(files);
-	renderNewModel(files);
-}
-
-function handleFileDrop(evt) {
-	evt.stopPropagation();
-	evt.preventDefault();
-	var files = evt.dataTransfer.files; // FileList object.
-	renderAttributes(files);
-	renderNewModel(files);
-}
-
-function initFileReading(){
-	//functionality from http://www.html5rocks.com/en/tutorials/file/dndfiles/
-	//read progress bar could be added if necessary but since it's client side loading
-	//it's pretty fast and an progress bar would be more interesting/useful when sending image to server
-
-	//read via input select
-	document.getElementById('files').addEventListener('change', handleFileInput, false);
-
-	//read via drag and drop
-	var dropZone = document.getElementById('drop-zone');
-	dropZone.addEventListener('dragover', handleDragOver, false);
-	dropZone.addEventListener('drop', handleFileDrop, false);
-}
-
 function init(){
 	var gui = new dat.GUI();
 	var parameters =
