@@ -22,8 +22,12 @@
 	<script src="js/vendor/OrbitControls.js"></script>
 	<script src="js/vendor/STLLoader.js"></script>
 
+	<!--
+	gif.js and gif.js.map need to be in the /js/vender folder
+	gif.worker.js and gif.worker.js.map need to be in the / (root) folder
+	-->
 	<script src="js/vendor/gif.js"></script>
-    <script src="js/vendor/gif.worker.js"></script>
+    <script src="./gif.worker.js"></script>
 
 	<script src="js/main.js"></script>
 </head>

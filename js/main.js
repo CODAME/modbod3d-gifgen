@@ -1,42 +1,41 @@
-//gif.js and gif.js.map need to be in the /js/vender folder
-//gif.worker.js and gif.worker.js.map need to be in the / (root) folder
+//config
+var showLogo = true;
+var retinaScreen = true;
+var rotateUpright = true;
+var transparentBackground = false;
+var camZ = 250;
 
+//global
+var frameCounter;
+var gifjs;
+
+// we're always rotating
+// this gets set to true to collect those rotation frames into a gif
+var writeFramesToGif = false;
+
+// threejs
 var scene;
 var renderer;
 var camera;
 var mesh;
-var rotationFrame;
-var helper;
-var turn_counter;
-var gif;
-
-var getImgData;
-var imgData;
-
+var pivot;
 var spriteBL;
 var cameraOrtho;
 var sceneOrtho;
-var mapA
+var loaderListener;
 
+// scene size, determined by retinaScreen flag
 var WIDTH;
 var HEIGHT;
 
-var loaderListener;
-
+// dat.gui control panel
 var gui;
-
-//initial values
-var camZ = 250;
-
-var writeFramesToGif = false;
-
-var retinaScreen = true;
 
 // var modelToLoad = 'stl/centered.stl';
 // declared in PHP at the top of index
 
 function setScene(){
-	turn_counter = 0;
+	frameCounter = 0;
 
 	// set the scene size
 	WIDTH = 400;
@@ -53,23 +52,20 @@ function setScene(){
 		FAR = 40000;
 
 	// get the DOM element to attach to
-	// - assume we've got jQuery to hand
+	// assume we've got jQuery to hand
 	var $container = $('#container');
 
-	// create a WebGL renderer, camera
-	// and a scene
-
+	// create a WebGL renderer
 	renderer = new THREE.WebGLRenderer({preserveDrawingBuffer: true});
-	renderer.autoClear = false; // To allow render overlay on top of sprited sphere
-
-
+	// allow render overlay on top of sprited sphere
+	renderer.autoClear = false;
+	// create camera and scene
 	camera = new THREE.PerspectiveCamera(
 		VIEW_ANGLE,
 		ASPECT,
 		NEAR,
 		FAR
 	);
-
 	scene = new THREE.Scene();
 
 	// add the camera to the scene
@@ -95,7 +91,7 @@ function setScene(){
 
 	sceneOrtho = new THREE.Scene();
 
-	mapA = THREE.ImageUtils.loadTexture( "logo/CODAME_C_Jagged_01-pure-white.png", undefined, loadSprite);
+	THREE.ImageUtils.loadTexture( "logo/CODAME_C_Jagged_01-pure-white.png", undefined, loadSprite);
 }
 
 function loadSprite( texture )
@@ -120,15 +116,18 @@ function loadSprite( texture )
 	// bottom left, codame
 	spriteBL.position.set( - halfScreenWidth + halfWidthSprite -35, - halfScreenHeight + halfWidthSprite -35, 1 );
 
-
 	// center
 	//spriteBL.position.set( 0, 0, 1 );
 
 	//remove logo sprite?
-	sceneOrtho.add(spriteBL);
+	if(showLogo == true){
+		sceneOrtho.add(spriteBL);
+	}
+
 }
 
 //debugging function
+var imgData;
 function renderImg() {
         requestAnimationFrame(renderImg);
         renderer.render(scene, camera);
@@ -139,54 +138,52 @@ function renderImg() {
     }
 
 function render() {
+	if(mesh && frameCounter < 60){
+		mesh.position.x = window.parameters.rotationX;
+		mesh.position.z = window.parameters.rotationZ;
 
-
-	if(mesh && turn_counter < 60){
-
-		mesh.rotation.y = turn_counter * (Math.PI / 30);
+		// 360° / 60 frames = turn 6° each frame
+		// π/30 × 180°/π = 6°
+		pivot.rotation.y = frameCounter * (Math.PI / 30);
 
 		renderer.clear();
 		renderer.render( scene, camera );
 		renderer.clearDepth();
 		renderer.render( sceneOrtho, cameraOrtho );
 
-		//debugging block
-//		getImageData = true;
-//		renderImg();
-//		console.debug(imgData);
-//		console.log(renderer.domElement);
+		// debugging block
+		/*
+		getImageData = true;
+		renderImg();
+		console.debug(imgData);
+		console.log(renderer.domElement);
+		*/
 
 		if (writeFramesToGif==true) {
-			gif.addFrame(renderer.domElement, {copy: true, delay: 40});
+			gifjs.addFrame(renderer.domElement, {copy: true, delay: 40});
 		};
 
-		turn_counter++;
-
+		frameCounter++;
 	}
-	else if (turn_counter == 60)
+	else if (frameCounter == 60)
 	{
-
 		if (writeFramesToGif==true) {
-			gif.on('finished', function(blob) {
+			// pop a new window with the gif when it's finished rendering
+			gifjs.on('finished', function(blob) {
 	  			window.open(URL.createObjectURL(blob));
 			});
-
-			gif.render();
-
-			//go back to just spinning around
+			// compile the frames into a gif
+			gifjs.render();
+			// go back to just spinning around
 			writeFramesToGif = false;
 		}
 
-		turn_counter = 0;
+		frameCounter = 0;
 	}
-
-
-      //renderer.render( scene, camera );
 }
 
 var loadModel = function(){
-
-	//dispose of the previous model
+	// dispose of the previous model
 	if(mesh){
 		scene.remove(mesh);
 	}
@@ -196,14 +193,16 @@ var loadModel = function(){
 	loaderListener = loader.addEventListener( 'load', function ( event ) {
 		var material = new THREE.MeshNormalMaterial();
 		var geometry = event.content;
-		//modifying the center point
-		//geometry.applyMatrix( new THREE.Matrix4().makeTranslation( 0, 0, 0 ) );
 		mesh = new THREE.Mesh( geometry, material );
 
-		//if a model is loaded sideways, get it upright
+		// if a model is loaded sideways, get it upright
 		mesh.rotation.set( 0, 0, 0);
 
-		scene.add( mesh );
+		// use a pivot object so we can modify the rotation point
+		// https://github.com/mrdoob/three.js/issues/1364
+		pivot = new THREE.Object3D();
+		pivot.add( mesh );
+		scene.add( pivot );
 
 	} );
 
@@ -211,13 +210,16 @@ var loadModel = function(){
 }
 
 function makeGif(){
-	gif = new GIF({ workers: 2, quality: 4 });
-	turn_counter = 0;
+	if(transparentBackground){
+		gifjs = new GIF({ workers: 2, quality: 4, transparent: 0x000000 });
+	}else{
+		gifjs = new GIF({ workers: 2, quality: 4});
+	}
+	frameCounter = 0;
 	writeFramesToGif = true;
 }
 
 function animate(){
-//	requestAnimationFrame( animate, renderer.domElement );
 	if(mesh){
 		mesh.scale.set( window.parameters.meshScale, window.parameters.meshScale, window.parameters.meshScale );
 		mesh.position.set( 0, window.parameters.meshVert, 0);
@@ -225,66 +227,25 @@ function animate(){
 		camera.lookAt( scene.position );
 	}
 
-
 	requestAnimationFrame( animate );
 	render();
-}
-
-function renderNewModel(files){
-	var f = files[0];
-	//TODO STL ONLY
-	/*
-	if ( !f.type.match('image.*') ) {
-		//display error message
-		return;
-	}
-	*/
-
-	var reader = new FileReader();
-
-	// Closure to capture the file information.
-	reader.onload = (function(theFile) { return function(e) {
-		console.log(e.target.result);
-
-		// Render loaded STL.
-
-		//var profileImage = document.getElementById('profile-image');
-		//profileImage.innerHTML = ['<img id="loadedPhoto" src="', e.target.result,'" title="', escape(theFile.name), '"/>'].join('');
-		//$(function(){ $('#loadedPhoto').Jcrop(); });
-
-	};})(f);
-
-	// Read in the image file as a data URL.
-	reader.readAsDataURL(f);
-
-}
-
-function renderAttributes(files){
-	// files is a FileList of File objects. List some properties.
-	var output = [];
-	for (var i = 0, f; f = files[i]; i++) {
-
-	output.push('<li><b>', escape(f.name), '</b> (', f.type || 'n/a', ') - ',
-	              f.size, ' bytes, last modified: ',
-	              f.lastModifiedDate ? f.lastModifiedDate.toLocaleDateString() : 'n/a',
-	              '</li>');
-	}
-
-	// spew it on the screen
-	document.getElementById('list').innerHTML = '<ul>' + output.join('') + '</ul>';
 }
 
 function init(){
 	var gui = new dat.GUI();
 	var parameters =
 	{
-		meshScale: 200,
+		meshScale: 111,
 		meshVert: 0,
-		camVert: 100
+		camVert: -92,
+		rotationX: 0,
+		rotationZ: 0
 	}
 	gui.add(parameters,'meshScale').min(40).max(400).name('Mesh Scale');
 	gui.add(parameters,'meshVert').min(-300).max(300).name('Mesh Vert');
 	gui.add(parameters,'camVert').min(-300).max(300).name('Cam Vert');
+	gui.add(parameters,'rotationX').min(-20).max(20).name('Rotation X');
+	gui.add(parameters,'rotationZ').min(-20).max(20).name('Rotation Z');
 
 	window.parameters = parameters;
 
@@ -293,7 +254,6 @@ function init(){
 
 	// draw
 	loadModel();
-
 }
 
 $( document ).ready(function() {
@@ -303,7 +263,4 @@ $( document ).ready(function() {
 	document.getElementById("generate-button").addEventListener("click", function(){
 	    makeGif();
 	});
-
-	//initFileReading();
-
 });
